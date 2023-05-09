@@ -74,6 +74,20 @@ impl AudioFile {
     }
 }
 
+struct TextToSpeech {
+    client: GoogleTranslateClient,
+    audio_file: AudioFile,
+}
+
+impl TextToSpeech {
+    async fn new(language: &str, path: &str) -> Self {
+        let client = GoogleTranslateClient::new(language.to_owned());
+        let audio_file = AudioFile::new(path).await;
+
+        Self { client, audio_file }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }
