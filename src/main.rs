@@ -18,6 +18,43 @@ struct SynthesizeTextRequest {
     client: String,
 }
 
+#[derive(Debug)]
+enum TtsError {
+    RequestError(reqwest::Error),
+    SerdeError(serde_urlencoded::ser::Error),
+    IoError(std::io::Error),
+}
+
+impl Error for TtsError {}
+
+impl std::fmt::Display for TtsError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TtsError::RequestError(e) => write!(f, "Request error: {}", e),
+            TtsError::SerdeError(e) => write!(f, "Serde error: {}", e),
+            TtsError::IoError(e) => write!(f, "IO error: {}", e),
+        }
+    }
+}
+
+impl From<reqwest::Error> for TtsError {
+    fn from(error: reqwest::Error) -> Self {
+        TtsError::RequestError(error)
+    }
+}
+
+impl From<serde_urlencoded::ser::Error> for TtsError {
+    fn from(error: serde_urlencoded::ser::Error) -> Self {
+        TtsError::SerdeError(error)
+    }
+}
+
+impl From<std::io::Error> for TtsError {
+    fn from(error: std::io::Error) -> Self {
+        TtsError::IoError(error)
+    }
+}
+
 struct GoogleTranslateClient {
     client: Client,
     base_url: String,
@@ -36,7 +73,7 @@ impl GoogleTranslateClient {
         }
     }
 
-    fn build_url(&self, text: &str) -> Result<String, Box<dyn Error>> {
+    fn build_url(&self, text: &str) -> Result<String, TtsError> {
         let request = SynthesizeTextRequest {
             input_encoding: "UTF-8".to_owned(),
             query: text.to_owned(),
@@ -51,7 +88,7 @@ impl GoogleTranslateClient {
         Ok(format!("{}?{}", self.base_url, query_string))
     }
 
-    async fn synthesize_text(&self, text: &str) -> Result<Response, Box<dyn Error>> {
+    async fn synthesize_text(&self, text: &str) -> Result<Response, TtsError> {
         let url = self.build_url(text)?;
         let response = self.client.get(&url).send().await?;
         Ok(response)
@@ -63,12 +100,12 @@ struct AudioFile {
 }
 
 impl AudioFile {
-    async fn new(path: &str) -> Self {
-        let file = File::create(path).await.unwrap();
-        Self { file }
+    async fn new(path: &str) -> Result<Self, TtsError> {
+        let file = File::create(path).await?;
+        Ok(Self { file })
     }
 
-    async fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), Box<dyn Error>> {
+    async fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), TtsError> {
         self.file.write_all(chunk).await?;
         Ok(())
     }
@@ -80,14 +117,14 @@ struct TextToSpeech {
 }
 
 impl TextToSpeech {
-    async fn new(language: &str, path: &str) -> Self {
+    async fn new(language: &str, path: &str) -> Result<Self, TtsError> {
         let client = GoogleTranslateClient::new(language.to_owned());
-        let audio_file = AudioFile::new(path).await;
+        let audio_file = AudioFile::new(path).await?;
 
-        Self { client, audio_file }
+        Ok(Self { client, audio_file })
     }
 
-    async fn synthesize_text(&mut self, text: &str) -> Result<(), Box<dyn Error>> {
+    async fn synthesize_text(&mut self, text: &str) -> Result<(), TtsError> {
         let mut response = self.client.synthesize_text(text).await?;
 
         if response.status().is_success() {
@@ -106,7 +143,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let language = "en-US";
     let path = "output.mp3";
 
-    let mut tts = TextToSpeech::new(language, path).await;
+    let mut tts = TextToSpeech::new(language, path).await?;
     tts.synthesize_text(text).await?;
     Ok(())
 }
