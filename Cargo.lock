@@ -169,16 +169,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "google_speak"
-version = "0.1.0"
-dependencies = [
- "reqwest",
- "serde",
- "serde_urlencoded",
- "tokio",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -771,6 +761,16 @@ dependencies = [
  "redox_syscall 0.3.5",
  "rustix",
  "windows-sys 0.45.0",
+]
+
+[[package]]
+name = "text_to_speech"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_urlencoded",
+ "tokio",
 ]
 
 [[package]]
