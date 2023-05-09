@@ -67,6 +67,11 @@ impl AudioFile {
         let file = File::create(path).await.unwrap();
         Self { file }
     }
+
+    async fn write_chunk(&mut self, chunk: &[u8]) -> Result<(), Box<dyn Error>> {
+        self.file.write_all(chunk).await?;
+        Ok(())
+    }
 }
 
 fn main() {
