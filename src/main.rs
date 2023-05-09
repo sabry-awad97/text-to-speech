@@ -50,6 +50,12 @@ impl GoogleTranslateClient {
         let query_string = serde_urlencoded::to_string(&request)?;
         Ok(format!("{}?{}", self.base_url, query_string))
     }
+
+    async fn synthesize_text(&self, text: &str) -> Result<Response, Box<dyn Error>> {
+        let url = self.build_url(text)?;
+        let response = self.client.get(&url).send().await?;
+        Ok(response)
+    }
 }
 fn main() {
     println!("Hello, world!");
