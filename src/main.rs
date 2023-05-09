@@ -100,6 +100,13 @@ impl TextToSpeech {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let text = "Hello, world!";
+    let language = "en-US";
+    let path = "output.mp3";
+
+    let mut tts = TextToSpeech::new(language, path).await;
+    tts.synthesize_text(text).await?;
+    Ok(())
 }
