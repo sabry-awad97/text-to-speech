@@ -86,6 +86,18 @@ impl TextToSpeech {
 
         Self { client, audio_file }
     }
+
+    async fn synthesize_text(&mut self, text: &str) -> Result<(), Box<dyn Error>> {
+        let mut response = self.client.synthesize_text(text).await?;
+
+        if response.status().is_success() {
+            while let Some(chunk) = response.chunk().await? {
+                self.audio_file.write_chunk(&chunk).await?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 fn main() {
