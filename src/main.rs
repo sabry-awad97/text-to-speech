@@ -57,6 +57,18 @@ impl GoogleTranslateClient {
         Ok(response)
     }
 }
+
+struct AudioFile {
+    file: File,
+}
+
+impl AudioFile {
+    async fn new(path: &str) -> Self {
+        let file = File::create(path).await.unwrap();
+        Self { file }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }
